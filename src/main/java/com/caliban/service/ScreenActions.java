@@ -7,15 +7,21 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import com.caliban.config.Locations;
+import com.caliban.enums.Images;
 import com.caliban.helper.ImageMatcher;
 import com.caliban.helper.Randomizer;
-import com.caliban.helper.ScreenLocations;
+import com.caliban.helper.ScreenLocationsHelper;
 
 public class ScreenActions {
 
     private Robot robot;
-    private ScreenLocations screenLocations = new ScreenLocations();
+    private ScreenLocationsHelper screenLocations = new ScreenLocationsHelper();
     private Randomizer randomizer = new Randomizer();
+    
+    // Constants for slot activity detection
+    private static final int SAMPLE_INTERVAL_MS = 300;
+    private static final int SAMPLE_COUNT = 5;
+    private static final int GREEN_THRESHOLD = 80; // Minimum green value to consider "green pulse"
 
     // 0.5 = red 243, green 253, blue 130
     Color system5 = new Color(243,253,130);
@@ -39,7 +45,11 @@ public class ScreenActions {
     }
 
     public int countTotalRows() {
-        return countAvailableImage(screenLocations.targetList(), "asteroidOverview.png");
+        return countAvailableImage(Locations.targetList, Images.ASTEROID_OVERVIEW.toString());
+    }
+
+    public int countTotalRows(String target) {
+        return countAvailableImage(Locations.targetList, target);
     }
 
     public int countRowsInRange() {
@@ -47,43 +57,71 @@ public class ScreenActions {
     }
 
     public int countTargetableRowsUnder10KM() {
-        return countAvailableImage(screenLocations.targetList(), "overviewMeters.png");
+        return countAvailableImage(Locations.targetList, Images.OVERVIEW_METERS.toString());
     }
 
     public int countTargetableRowsBetween10KMand20KM() {
-        return countAvailableImage(screenLocations.targetList(), "10km.png");
+        return countAvailableImage(Locations.targetList, Images.TEN_KM.toString());
     }
 
     public boolean isHighSlot1Active() {
-        int interval = 300;
-        int differenceThreshold = 10;
-        Color pixelColor1 = robot.getPixelColor((int)Locations.hislot1GreenActivePixel.getX(), (int)Locations.hislot1GreenActivePixel.getY());
-        robot.delay(interval);
-        Color pixelColor2 = robot.getPixelColor((int)Locations.hislot1GreenActivePixel.getX(), (int)Locations.hislot1GreenActivePixel.getY());
-        robot.delay(interval);
-        Color pixelColor3 = robot.getPixelColor((int)Locations.hislot1GreenActivePixel.getX(), (int)Locations.hislot1GreenActivePixel.getY());
-        robot.delay(interval);
-        Color pixelColor4 = robot.getPixelColor((int)Locations.hislot1GreenActivePixel.getX(), (int)Locations.hislot1GreenActivePixel.getY());
-
-        if (getColorDifference(pixelColor1, pixelColor2) > differenceThreshold || getColorDifference(pixelColor1, pixelColor3) > differenceThreshold || getColorDifference(pixelColor1, pixelColor4) > differenceThreshold) return true;
-
-        return false;
+        return isSlotActive(Locations.hislot1GreenActivePixel);
     }
 
     public boolean isHighSlot2Active() {
-        int interval = 300;
-        int differenceThreshold = 10;
-        Color pixelColor1 = robot.getPixelColor((int)Locations.hislot2GreenActivePixel.getX(), (int)Locations.hislot2GreenActivePixel.getY());
-        robot.delay(interval);
-        Color pixelColor2 = robot.getPixelColor((int)Locations.hislot2GreenActivePixel.getX(), (int)Locations.hislot2GreenActivePixel.getY());
-        robot.delay(interval);
-        Color pixelColor3 = robot.getPixelColor((int)Locations.hislot2GreenActivePixel.getX(), (int)Locations.hislot2GreenActivePixel.getY());
-        robot.delay(interval);
-        Color pixelColor4 = robot.getPixelColor((int)Locations.hislot2GreenActivePixel.getX(), (int)Locations.hislot2GreenActivePixel.getY());
-
-        if (getColorDifference(pixelColor1, pixelColor2) > differenceThreshold || getColorDifference(pixelColor1, pixelColor3) > differenceThreshold || getColorDifference(pixelColor1, pixelColor4) > differenceThreshold) return true;
-
-        return false;    }
+        return isSlotActive(Locations.hislot2GreenActivePixel);
+    }
+    
+    /**
+     * Detects if a slot is active by looking for the characteristic green pulse.
+     * Active slots pulse green, so we sample the pixel a few times to catch the green flash.
+     * 
+     * @param pixelLocation The point to monitor for green pulses
+     * @return true if a green pulse is detected, false otherwise
+     */
+    private boolean isSlotActive(Point pixelLocation) {
+        if (pixelLocation == null) {
+            return false;
+        }
+        
+        int x = (int) pixelLocation.getX();
+        int y = (int) pixelLocation.getY();
+        
+        // Sample the pixel multiple times to catch the green pulse
+        for (int i = 0; i < SAMPLE_COUNT; i++) {
+            Color pixelColor = robot.getPixelColor(x, y);
+            
+            // Check if this sample shows the green pulse
+            if (isGreenPulse(pixelColor)) {
+                return true;
+            }
+            
+            // Wait before next sample (except on last iteration)
+            if (i < SAMPLE_COUNT - 1) {
+                robot.delay(SAMPLE_INTERVAL_MS);
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Determines if a color represents the green pulse of an active slot.
+     * Active slots pulse with a distinctive green color.
+     * 
+     * @param color The color to check
+     * @return true if the color indicates an active green pulse
+     */
+    private boolean isGreenPulse(Color color) {
+        int red = color.getRed();
+        int green = color.getGreen();
+        int blue = color.getBlue();
+        
+        // Look for green-dominant colors typical of active slot pulses
+        return green > GREEN_THRESHOLD && 
+               green > red && 
+               green > blue;
+    }
 
 
     private static double getColorDifference(Color color1, Color color2) {
@@ -104,6 +142,7 @@ public class ScreenActions {
         );
     }
 
+    @Deprecated
     public boolean isCompressionNeeded() {
         Color pixelColor = robot.getPixelColor((int)Locations.cargoFullnessBar.getX(), (int)Locations.cargoFullnessBar.getY());
 
@@ -113,13 +152,13 @@ public class ScreenActions {
     }
 
     public boolean isInStation() {
-        Rectangle location = this.findImage(screenLocations.rightQuarter(), "inStation.png");
+        Rectangle location = this.findImage(screenLocations.rightQuarter(), Images.IN_STATION.toString());
         return (location != null);
     }
 
     public Rectangle findImage(Rectangle screenLocation, String imageFile) {
         String pathYourSystem = System.getProperty("user.dir");
-        //System.out.println("searching for:" + imageFile);
+
         return ImageMatcher.findImage(pathYourSystem +"\\src\\main\\resources\\images\\"+ imageFile,
         screenLocation);
     }
@@ -147,14 +186,15 @@ public class ScreenActions {
                 screenLocation);
     }
 
+    @Deprecated
     public boolean hasItemInHanger() {
         //wait a second for item to show up
         robot.delay(1000);
-        Point point1 = generateRandomPointWithinArea(Locations.firstItemHangerStart, Locations.firstItemHangerEnd);
-        Point point2 = generateRandomPointWithinArea(Locations.firstItemHangerStart, Locations.firstItemHangerEnd);
-        Point point3 = generateRandomPointWithinArea(Locations.firstItemHangerStart, Locations.firstItemHangerEnd);
-        Point point4 = generateRandomPointWithinArea(Locations.firstItemHangerStart, Locations.firstItemHangerEnd);
-        Point point5 = generateRandomPointWithinArea(Locations.firstItemHangerStart, Locations.firstItemHangerEnd);
+        Point point1 = generateRandomPointWithinArea(Locations.firstItemHanger);
+        Point point2 = generateRandomPointWithinArea(Locations.firstItemHanger);
+        Point point3 = generateRandomPointWithinArea(Locations.firstItemHanger);
+        Point point4 = generateRandomPointWithinArea(Locations.firstItemHanger);
+        Point point5 = generateRandomPointWithinArea(Locations.firstItemHanger);
 
         Color pixelColor1 = robot.getPixelColor((int)point1.getX(), (int)point1.getY());
         Color pixelColor2 = robot.getPixelColor((int)point2.getX(), (int)point2.getY());
@@ -165,14 +205,15 @@ public class ScreenActions {
         return (!isDarkPixel(pixelColor1) || !isDarkPixel(pixelColor2) || !isDarkPixel(pixelColor3) || !isDarkPixel(pixelColor4) || !isDarkPixel(pixelColor5));
     }
 
+    @Deprecated
     public boolean hasItemInCargo() {
         //wait a second for item to show up
         robot.delay(1000);
-        Point point1 = generateRandomPointWithinArea(Locations.cargoHoldItem1Start, Locations.cargoHoldItem1End);
-        Point point2 = generateRandomPointWithinArea(Locations.cargoHoldItem1Start, Locations.cargoHoldItem1End);
-        Point point3 = generateRandomPointWithinArea(Locations.cargoHoldItem1Start, Locations.cargoHoldItem1End);
-        Point point4 = generateRandomPointWithinArea(Locations.cargoHoldItem1Start, Locations.cargoHoldItem1End);
-        Point point5 = generateRandomPointWithinArea(Locations.cargoHoldItem1Start, Locations.cargoHoldItem1End);
+        Point point1 = generateRandomPointWithinArea(Locations.cargoHoldItem1);
+        Point point2 = generateRandomPointWithinArea(Locations.cargoHoldItem1);
+        Point point3 = generateRandomPointWithinArea(Locations.cargoHoldItem1);
+        Point point4 = generateRandomPointWithinArea(Locations.cargoHoldItem1);
+        Point point5 = generateRandomPointWithinArea(Locations.cargoHoldItem1);
 
         Color pixelColor1 = robot.getPixelColor((int)point1.getX(), (int)point1.getY());
         Color pixelColor2 = robot.getPixelColor((int)point2.getX(), (int)point2.getY());
@@ -184,28 +225,35 @@ public class ScreenActions {
     }
 
     public boolean hasRouteSet() {
-        Rectangle location = this.findImage(screenLocations.leftQuarter(), "routeCurrentLocation.png");
+        Rectangle location = this.findImage(screenLocations.leftQuarter(), Images.ROUTE_CURRENT_LOCATION.toString());
         return (location != null);
     }
 
-    private Point generateRandomPointWithinArea(Point start, Point end) {
-        int x = randomizer.generateRandom((int)start.getX(), (int)end.getX());
-        int y = randomizer.generateRandom((int)start.getY(), (int)end.getY());
-        return new Point(x,y);
-    }
+
+    public Point generateRandomPointWithinArea(Rectangle area) {
+        int x = randomizer.generateRandom((int)area.getX(), (int)area.getX()+(int)area.getWidth());
+        int y = randomizer.generateRandom((int)area.getY(), (int)area.getX()+(int)area.getHeight());
+
+        return new Point(x, y);
+        }
 
     private boolean isDarkPixel(Color color) {
         return (color.getRed() < 50 && color.getBlue() < 50 && color.getGreen() < 50);
     }
 
-    public void firstDesktop() {
+    public void displayDesktops() {
         robot.keyPress(KeyEvent.VK_WINDOWS);
         robot.keyPress(KeyEvent.VK_TAB);
         robot.keyRelease(KeyEvent.VK_WINDOWS);
         robot.keyRelease(KeyEvent.VK_TAB);
         robot.delay(1000);
+    }
+
+    public void firstDesktop() {
+        displayDesktops();
+        
         robot.mouseMove(100, 990);
-        robot.mouseWheel(-3);
+        robot.mouseWheel(-6);
         robot.delay(1000);
         robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
         robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
@@ -230,6 +278,50 @@ public class ScreenActions {
 
         robot.keyRelease(KeyEvent.VK_RIGHT);
         robot.keyRelease(KeyEvent.VK_WINDOWS);
+        robot.keyRelease(KeyEvent.VK_CONTROL);
+        robot.delay(500);
+    }
+
+    public void pressShiftF() {
+        robot.keyPress(KeyEvent.VK_SHIFT);
+        robot.delay(50);
+        robot.keyPress(KeyEvent.VK_F);
+        robot.delay(50);
+        robot.keyRelease(KeyEvent.VK_F);
+        robot.delay(50);
+        robot.keyRelease(KeyEvent.VK_SHIFT);
+        robot.delay(500);
+    }
+
+    public void pressShiftR() {
+        robot.keyPress(KeyEvent.VK_SHIFT);
+        robot.delay(50);
+        robot.keyPress(KeyEvent.VK_R);
+        robot.delay(50);
+        robot.keyRelease(KeyEvent.VK_R);
+        robot.delay(50);
+        robot.keyRelease(KeyEvent.VK_SHIFT);
+        robot.delay(500);
+    }
+
+    public void pressF() {
+        robot.keyPress(KeyEvent.VK_F);
+        robot.delay(50);
+        robot.keyRelease(KeyEvent.VK_F);
+        robot.delay(100);
+    }
+
+    public void pressCtrlAltX() {
+        robot.keyPress(KeyEvent.VK_CONTROL);
+        robot.delay(50);
+        robot.keyPress(KeyEvent.VK_ALT);
+        robot.delay(50);
+        robot.keyPress(KeyEvent.VK_X);
+        robot.delay(100);
+        robot.keyRelease(KeyEvent.VK_X);
+        robot.delay(50);
+        robot.keyRelease(KeyEvent.VK_ALT);
+        robot.delay(50);
         robot.keyRelease(KeyEvent.VK_CONTROL);
         robot.delay(500);
     }

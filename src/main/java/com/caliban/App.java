@@ -6,6 +6,11 @@ public class App
 {
     public static void main( String[] args )
     {
-        new MainInterface();
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                MainInterface mainInterface = new MainInterface();
+                mainInterface.setVisible(true);
+            }
+        });
     }
 }

@@ -1,113 +1,153 @@
 package com.caliban.activity;
 
-import java.awt.Rectangle;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.caliban.helper.ScreenLocations;
+import com.caliban.config.ScreenLocations;
+import com.caliban.enums.CharacterType;
+import com.caliban.enums.Images;
+import com.caliban.enums.MinerType;
+import com.caliban.service.DroneService;
 import com.caliban.service.MiningActionsService;
+import com.caliban.service.OreService;
 import com.caliban.service.ScreenActions;
+import com.caliban.service.ThreatCheckerService;
 
-public class IceMiningActivity {
+public class IceMiningActivity extends Activity {
 
-    private AtomicBoolean mainLoop = new AtomicBoolean(false);
-    private String status = "MINING";
+    private static final int ROID_DOCK_THRESHOLD = 0;
+    private static final int IDLE_TIME_MS = 15000;
 
-    private MiningActionsService actionInterfacer = new MiningActionsService();
-    private ScreenActions screenActions = new ScreenActions();
-    private ScreenLocations screenLocations = new ScreenLocations();
+    private final AtomicBoolean mainLoop = new AtomicBoolean(false);
 
-    public void start(int numberCharacters) {
-        System.out.println("Starting Mining");
+    private final MiningActionsService actionInterfacer = new MiningActionsService();
+    private final DroneService droneService = new DroneService();
+    private final ScreenActions screenActions = new ScreenActions();
+    private final OreService oreService = new OreService();
+    private final ThreatCheckerService threatChecker = new ThreatCheckerService();
+    private final Random random = new Random();
 
-        mainLoop.getAndSet(true);
-        status = "MINING";
+    private int roidsLeft = 0;
+    private double manageOreProbability = 0.6; // Starting at 60%
 
-        int roidsLeft =0;
+    public void start(int numberCharacters, MinerType minerType) {
+        sendAlert("Starting Mining");
+        mainLoop.set(true);
+        setState("MINING");
+        
+        // Set manageOreProbability to 1.0 for HULK miners
+        if (minerType == MinerType.HULK) {
+            manageOreProbability = 1.0;
+        }
 
-        String characterType;
         while (mainLoop.get()) {
             screenActions.firstDesktop();
+            
+            boolean shouldManageOre = shouldManageOreThisLoop();
+            boolean manageOreCalled = false;
 
-            for (int i = 0; i < numberCharacters; i++) {
-                if (!mainLoop.get()) break;
-
+            for (int i = 0; i < numberCharacters && mainLoop.get(); i++) {
                 checkForDock();
-                //checkForThreats();
+/*                status = threatChecker.checkForThreats(status, 
+                    () -> sendAlert("Hostiles in area, docking up"),
+                    () -> {
+                        sendAlert("Character mentioned in local");
+                        playSound("chatAlarm.wav");
+                    });*/ 
 
-                characterType = getCharType();
+                CharacterType characterType = getCharType();
 
-                if ("BOOST".equals(characterType) && "MINING".equals(status)) {
-                    roidsLeft = screenActions.countTotalRows();
-
-                    System.out.println("Roids left: "+ roidsLeft);
-
-                    //If there's only few roids left, dock on next cycle
-                    if (roidsLeft<=2 && "MINING".equals(status)) {
-                        status = "DOCK";
-                        System.out.println("No roids left.  Docking up");
-                        actionInterfacer.activateBoostHighslots();
-                    }
-                }
-
-                if ("MINER".equals(characterType)&&"MINING".equals(status)&&roidsLeft>0) {
-                    minerActions();
+                switch (characterType) {
+                    case BOOST:
+                        roidsLeft = handleBooster();
+                        
+                        break;
+                    case MINER:
+                        if ("MINING".equals(getState()) && roidsLeft > 0) {
+                            if (shouldManageOre || screenActions.isCompressionNeeded()) {
+                                oreService.manageOre(minerType);
+                                manageOreCalled = true;
+                            }
+                            oreService.mineOre();
+                        }
+                        manageDrones();
+                        break;
+                    default:
+                        // DOCKED or UNKNOWN, do nothing
+                        break;
                 }
                 screenActions.nextDesktop();
             }
-            if (!mainLoop.get()) break;
-            actionInterfacer.simulateIdleBehaviour(15000);
-            actionInterfacer.simulateIdleBehaviour(15000);
-        }
-    }
 
-    private void minerActions() {
-
-        actionInterfacer.compressOre();
-
-        //Target asteroids if current locked count is low
-        if(screenActions.countTargetsAvailable("overviewTargeted.png") <=4) actionInterfacer.targetAll("asteroidOverview.png", 5);
-        //Activate highslots is needed
-        actionInterfacer.activateHighSlots();
-
-    }
-
-    private void checkForDock() {
-        if("DOCK".equals(status)) {
-            if(!screenActions.isInStation()) {
-                actionInterfacer.activateHomeBookmark();
+            screenActions.firstDesktop();
+            updateManageOreProbability(manageOreCalled);
+            
+            if (mainLoop.get()) {
+                if (minerType == MinerType.HULK) {
+                    actionInterfacer.simulateIdleBehaviour(5000);
+                } else if (minerType == MinerType.MACKINAW) {
+                    actionInterfacer.simulateIdleBehaviour(IDLE_TIME_MS);
+                    actionInterfacer.simulateIdleBehaviour(IDLE_TIME_MS);
+                }
             }
         }
     }
 
-    private void checkForThreats() {
-        if (checkLocalForHostiles()) {
-            System.out.println("Hostiles in area, dockup");
-            status= "DOCK";
+    private int handleBooster() {
+        roidsLeft = screenActions.countTotalRows();
+        sendAlert("Roids left: " + roidsLeft);
+
+        if (roidsLeft <= ROID_DOCK_THRESHOLD && "MINING".equals(getState())) {
+            setState("DOCKING");
+            sendAlert("No roids left. Docking up");
+            actionInterfacer.activateBoostHighslots();
         }
-        //Check for local numbers jump
-        //Check for talos / catalyst numbers on radar
+        return roidsLeft;
     }
 
-    private boolean checkLocalForHostiles() {
-        return (screenActions.countAvailableImage(screenLocations.chatArea(),"negativeStandings.png")>2);
+    private void manageDrones() {
+        if (roidsLeft <= 4) {
+            droneService.recallDrone();
+        }
+     }
+
+    private void checkForDock() {
+        if ("DOCKING".equals(getState()) && !screenActions.isInStation()) {
+            actionInterfacer.activateHomeBookmark();
+        }
+    }
+
+    private boolean shouldManageOreThisLoop() {
+        return random.nextDouble() < manageOreProbability;
+    }
+
+    private void updateManageOreProbability(boolean manageOreCalled) {
+        if (manageOreCalled) {
+            // Reset probability to base 60% when manageOre was called
+            manageOreProbability = 0.6;
+        } else {
+            // Increase probability by 10% when manageOre wasn't called (max 100%)
+            manageOreProbability = Math.min(1.0, manageOreProbability + 0.1);
+        }
     }
 
     public void stop() {
-        mainLoop.getAndSet(false);
+        mainLoop.set(false);
     }
 
-    private String getCharType() {
-       Rectangle match = screenActions.findImage(screenLocations.modulePanel(), "booster.png");
 
-       if(match != null) return "BOOST";
 
-       match = screenActions.findImage(screenLocations.modulePanel(), "iceMiner.png");
-
-       if(match != null) return "MINER";
-
-       if(screenActions.isInStation()) return "DOCKED";
-        
-       System.out.println("Unable to get charType");
-       return "UNKNOWN";
+    private CharacterType getCharType() {
+        if (screenActions.findImage(ScreenLocations.modulePanel, Images.BOOSTER.toString()) != null) {
+            return CharacterType.BOOST;
+        }
+        if (screenActions.findImage(ScreenLocations.modulePanel, Images.ICE_MINER.toString()) != null) {
+            return CharacterType.MINER;
+        }
+        if (screenActions.isInStation()) {
+            return CharacterType.DOCKED;
+        }
+        sendAlert("Unable to get charType");
+        return CharacterType.UNKNOWN;
     }
 }

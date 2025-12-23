@@ -1,6 +1,7 @@
 package com.caliban.service;
 
 import java.awt.AWTException;
+import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -26,6 +27,12 @@ public class MouseActions {
         }
     }
 
+    public void moveMouse(Rectangle rectangle) {
+        int randomX = randomizer.generateRandom(rectangle.x, rectangle.x + rectangle.width);
+        int randomY = randomizer.generateRandom(rectangle.y, rectangle.y + rectangle.height);
+        moveMouse(randomX, randomY);
+    }
+
     public void moveMouse(int x, int y) {
         try {
             factory.move(x,y);
@@ -35,10 +42,12 @@ public class MouseActions {
         }
     }
 
+
+
     public void click() {
         robot.delay(randomizer.generateRandom(100, 500));
 		robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-        robot.delay(randomizer.generateRandom(100, 200));       
+        robot.delay(randomizer.generateRandom(100, 200));
 		robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
     }
 
@@ -54,18 +63,18 @@ public class MouseActions {
     public void rightClick() {
         robot.delay(randomizer.generateRandom(100, 500));
 		robot.mousePress(InputEvent.BUTTON3_DOWN_MASK);
-        robot.delay(randomizer.generateRandom(100, 300));       
+        robot.delay(randomizer.generateRandom(100, 300));
 		robot.mouseRelease(InputEvent.BUTTON3_DOWN_MASK);
     }
 
     public void hold() {
         robot.delay(randomizer.generateRandom(100, 500));
 		robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-        robot.delay(randomizer.generateRandom(100, 200));       
+        robot.delay(randomizer.generateRandom(100, 200));
     }
 
     public void release() {
-        robot.delay(randomizer.generateRandom(100, 500));       
+        robot.delay(randomizer.generateRandom(100, 500));
 		robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
         robot.delay(randomizer.generateRandom(100, 200));
     }
@@ -96,11 +105,11 @@ public class MouseActions {
             robot.mouseWheel(randomizer.generateRandom(1, 5));
             robot.mouseWheel(-randomizer.generateRandom(1, 5));
             loop++;
-          }
+        }
 	}
 
     public void simulateWait(int min, int max) {
-        robot.delay(randomizer.generateRandom(min, max)); 
+        robot.delay(randomizer.generateRandom(min, max));
     }
 
     public void holdControl() {
@@ -109,5 +118,19 @@ public class MouseActions {
 
     public void releaseControl() {
         robot.keyRelease(KeyEvent.VK_CONTROL);
+    }
+
+    public void pressF1() {
+        robot.keyPress(KeyEvent.VK_F1);
+        robot.delay(randomizer.generateRandom(100, 500));
+        robot.keyRelease(KeyEvent.VK_F1);
+        robot.delay(randomizer.generateRandom(100, 500));
+    }
+
+    public void pressF2() {
+        robot.keyPress(KeyEvent.VK_F2);
+        robot.delay(randomizer.generateRandom(100, 500));
+        robot.keyRelease(KeyEvent.VK_F2);
+        robot.delay(randomizer.generateRandom(100, 500));
     }
 }

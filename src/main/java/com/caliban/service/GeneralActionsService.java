@@ -1,9 +1,10 @@
 package com.caliban.service;
 
+import com.caliban.enums.Images;
 import com.caliban.model.AutomatedCharacter;
 import com.caliban.config.Locations;
 import com.caliban.helper.Randomizer;
-import com.caliban.helper.ScreenLocations;
+import com.caliban.helper.ScreenLocationsHelper;
 
 import java.util.ArrayList;
 import java.awt.*;
@@ -16,25 +17,18 @@ public class GeneralActionsService {
 
     protected ScreenActions screenActions = new ScreenActions();
 
-    protected ScreenLocations screenLocations = new ScreenLocations();
+    protected ScreenLocationsHelper screenLocations = new ScreenLocationsHelper();
 
     public void switchToCharacter(AutomatedCharacter character) {
 
         mouseActions.simulateWait(2000,3000);
 
-        clickActivationArea(character.getActivationBoundryStart(),
-                character.getActivationBoundryEnd());
+        clickActivationArea(character.getActivationBoundry());
     }
 
     public void targetAll(String target, int maxTargets) {
-        // Define the area to check
-        double width = Locations.targetListBottom.getX() - Locations.targetListTop.getX();
-        double height = Locations.targetListBottom.getY() - Locations.targetListTop.getY();
-        Rectangle area = new Rectangle((int) Locations.targetListTop.getX(), (int) Locations.targetListTop.getY(),
-                (int) width, (int) height);
-
-        ArrayList<Rectangle> matches = screenActions.findAllImage(area, target);
-        
+        ArrayList<Rectangle> matches = screenActions.findAllImage(Locations.targetList, target);
+        if (matches.size() == 0) { return;}
         //reduce list down to max size
         while (matches.size() > maxTargets) {
             matches.remove(matches.size() - 1);
@@ -43,9 +37,7 @@ public class GeneralActionsService {
         mouseActions.holdControl();
         mouseActions.simulateWait(500,1000);
         for (Rectangle match : matches) {
-            Point start = new Point((int)match.getX(), (int)match.getY());
-            Point end = new Point((int)(match.getX()+match.getWidth()), (int)(match.getY()+match.getHeight()));
-            clickActivationArea(start, end);
+            clickActivationArea(match);
             mouseActions.simulateWait(250,500);
         }
         mouseActions.releaseControl();
@@ -70,24 +62,26 @@ public class GeneralActionsService {
     }
 
     private void activateFirstTargetedItem() {
-        clickActivationArea(Locations.lockedTarget1Start, Locations.lockedTarget1End);
+        clickActivationArea(Locations.lockedTarget1);
     }
 
     private void activateSecondTargetedItem() {
-        clickActivationArea(Locations.lockedTarget2Start, Locations.lockedTarget2End);
+        clickActivationArea(Locations.lockedTarget2);
     }
 
     private void activateHighSlot1() {
-        clickActivationArea(Locations.hislot1Start, Locations.hislot1End);
+        //clickActivationArea(Locations.hislot1);
+        mouseActions.pressF1();
     }
 
     private void activateHighSlot2() {
-        clickActivationArea(Locations.hislot2Start, Locations.hislot2End);
+        //clickActivationArea(Locations.hislot2);
+        mouseActions.pressF2();
     }
 
 
     protected void activateCargoHoldAndSelectAll() {
-        clickActivationArea(Locations.cargoHoldActivateStart,Locations.cargoHoldActiveEnd);
+        clickActivationArea(Locations.cargoHoldActivate);
         mouseActions.selectAll();
     }
 
@@ -111,17 +105,17 @@ public class GeneralActionsService {
     }
 
     public void openCargoHold() {
-        Rectangle cargoLocation = screenActions.findImage(screenLocations.leftQuarter(),"cargoOpen.png");
-        if (cargoLocation==null) doubleClickActivationArea(Locations.cargoHoldActivateStart,Locations.cargoHoldActiveEnd);
+        Rectangle cargoLocation = screenActions.findImage(screenLocations.leftQuarter(), Images.CARGO_OPEN.toString());
+        if (cargoLocation==null) doubleClickActivationArea(Locations.cargoHoldActivate);
     }
 
     public void emptyCargo() {
         if (!screenActions.hasItemInCargo()) return;
 
         activateCargoHoldAndSelectAll();
-        mouseMoveToArea(Locations.cargoHoldItem1Start, Locations.cargoHoldItem1End);
+        mouseMoveToArea(Locations.cargoHoldItem1);
         mouseActions.hold();
-        mouseMoveToArea(Locations.firstItemHangerStart, Locations.firstItemHangerEnd);
+        mouseMoveToArea(Locations.firstItemHanger);
         mouseActions.release();
     }
 
@@ -130,102 +124,91 @@ public class GeneralActionsService {
         // check if cargo hold is open
         openCargoHold();
         // move cargo item to hold
-        mouseMoveToArea(Locations.firstItemHangerStart, Locations.firstItemHangerEnd);
+        mouseMoveToArea(Locations.firstItemHanger);
         mouseActions.hold();
-        mouseMoveToArea(Locations.cargoHoldItem1Start, Locations.cargoHoldItem1End);
-        mouseActions.release();
-    }
-
-    public void moveFirstCargoHoldItemToHanger() {
-        if (!screenActions.hasItemInHanger()) return;
-        // check if cargo hold is open
-        openCargoHold();
-        // move cargo item to hold
-        mouseMoveToArea(Locations.cargoHoldItem1Start, Locations.cargoHoldItem1End);
-        mouseActions.hold();
-        mouseMoveToArea(Locations.firstItemHangerStart, Locations.firstItemHangerEnd);
+        mouseMoveToArea(Locations.cargoHoldActivate);
         mouseActions.release();
     }
 
     public void undock() {
-        clickActivationArea(Locations.stationUndockStart, Locations.stationUndockEnd);
+        clickActivationArea(Locations.stationUndock);
     }
 
-
     public void warpToRouteDestination() {
-        rightClickActivationArea(Locations.firstRouteSystemStart, Locations.firstRouteSystemEnd);
+        rightClickActivationArea(Locations.firstRouteSystem);
 
-        Rectangle jump = screenActions.findImage(screenLocations.leftQuarter(),"routeJumpThroughStargate.png");
+        Rectangle jump = screenActions.findImage(screenLocations.leftQuarter(), Images.ROUTE_JUMP_THROUGH_STARGATE.toString());
 
         if(jump != null) {
-            Point start = new Point((int) jump.getX(), (int) jump.getY());
-            Point end = new Point((int) (jump.getX() + jump.getWidth()), 
-                                                (int) (jump.getY() + jump.getHeight()));
-    
-            clickActivationArea(start, end);
+            clickActivationArea(jump);
             return;
         }
 
-        Rectangle dock = screenActions.findImage(screenLocations.leftQuarter(),"routeDock.png");
+        Rectangle dock = screenActions.findImage(screenLocations.leftQuarter(), Images.ROUTE_DOCK.toString());
 
         if(dock != null) {
-            Point start = new Point((int) dock.getX(), (int) dock.getY());
-            Point end = new Point((int) (dock.getX() + dock.getWidth()), 
-                                                (int) (dock.getY() + dock.getHeight()));
-    
-            clickActivationArea(start, end);
+            clickActivationArea(dock);
         }
     }
 
     public void activateHomeBookmark() {
-        rightClickActivationArea(Locations.bookmarkHomeStart, Locations.bookmarkHomeEnd);
+        rightClickActivationArea(Locations.bookmarkHome);
 
-        Rectangle dock = screenActions.findImage(screenLocations.rightQuarter(),"bookmarkHomeDock.png");
+        Rectangle dock = screenActions.findImage(screenLocations.rightQuarter(), Images.BOOKMARK_HOME_DOCK.toString());
 
         if(dock != null) {
-            Point start = new Point((int) dock.getX(), (int) dock.getY());
-            Point end = new Point((int) (dock.getX() + dock.getWidth()), 
-                                                (int) (dock.getY() + dock.getHeight()));
-    
-            clickActivationArea(start, end);
+            clickActivationArea(dock);
             return;
         }
 
-        Rectangle setDestination = screenActions.findImage(screenLocations.rightQuarter(),"bookmarkHomeSetDestination.png");
+        Rectangle setDestination = screenActions.findImage(screenLocations.rightQuarter(), Images.BOOKMARK_HOME_SET_DESTINATION.toString());
 
         if(setDestination != null) {
-            Point start = new Point((int) setDestination.getX(), (int) setDestination.getY());
-            Point end = new Point((int) (setDestination.getX() + setDestination.getWidth()), 
-                                                (int) (setDestination.getY() + setDestination.getHeight()));
-    
-            clickActivationArea(start, end);
+            clickActivationArea(setDestination);
         }
     }
 
-    protected void clickActivationArea(Point start, Point end) {
+        public void activateAgentHomeBookmark() {
+        rightClickActivationArea(Locations.agentBookmarkHome);
+
+        Rectangle dock = screenActions.findImage(screenLocations.rightQuarter(), Images.BOOKMARK_HOME_DOCK.toString());
+
+        if(dock != null) {
+            clickActivationArea(dock);
+            return;
+        }
+
+        Rectangle setDestination = screenActions.findImage(screenLocations.rightQuarter(), Images.BOOKMARK_HOME_SET_DESTINATION.toString());
+
+        if(setDestination != null) {
+            clickActivationArea(setDestination);
+        }
+    }
+
+    protected void clickActivationArea(Rectangle area) {
         mouseActions.simulateWait(100,500);
-        mouseMoveToArea(start, end);
+        mouseMoveToArea(area);
         mouseActions.click();
     }
 
-    protected void rightClickActivationArea(Point start, Point end) {
+    protected void rightClickActivationArea(Rectangle area) {
         mouseActions.simulateWait(100,500);
-        mouseMoveToArea(start, end);
+        mouseMoveToArea(area);
         mouseActions.rightClick();
     }
 
-    protected void doubleClickActivationArea(Point start, Point end) {
+    protected void doubleClickActivationArea(Rectangle area) {
         mouseActions.simulateWait(100,500);
-        mouseMoveToArea(start, end);
+        mouseMoveToArea(area);
         mouseActions.doubleClick();
     }
 
-    protected Point mouseMoveToArea(Point start, Point end) {
-        int characterActivateX = randomizer.generateRandom((int)start.getX(), (int)end.getX());
-        int characterActivateY = randomizer.generateRandom((int)start.getY(), (int)end.getY());
+    protected Point mouseMoveToArea(Rectangle area) {
+        int x = randomizer.generateRandom((int)area.getX(), (int)area.getX()+(int)area.getWidth());
+        int y = randomizer.generateRandom((int)area.getY(), (int)area.getY()+(int)area.getHeight());
 
-        mouseActions.moveMouse(characterActivateX, characterActivateY);
+        mouseActions.moveMouse(x, y);
 
-        return new Point(characterActivateX,characterActivateY);
+        return new Point(x,y);
     }
 }

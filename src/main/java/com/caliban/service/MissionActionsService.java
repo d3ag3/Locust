@@ -1,6 +1,7 @@
 package com.caliban.service;
 
 import com.caliban.config.Locations;
+import com.caliban.config.ScreenLocations;
 
 import java.awt.*;
 
@@ -8,54 +9,44 @@ public class MissionActionsService extends GeneralActionsService {
 
     public void startNewMission(String selectedAgent) {
         //find agent icon
-        Rectangle agentLocation = screenActions.findImage(screenLocations.agentPanel(),"\\agents\\"+selectedAgent);
+        Rectangle agentLocation = screenActions.findImage(ScreenLocations.agentPanel,"\\agents\\"+selectedAgent);
 
         if(agentLocation == null) {
             System.out.println("Error, can't find agent to start mission");
             return;
         }
 
-        //double click on agent
-        Point agentStart = new Point((int) agentLocation.getX(), (int) agentLocation.getY());
-        Point agentEnd = new Point((int) (agentLocation.getX() + agentLocation.getWidth()), 
-                                            (int) (agentLocation.getY() + agentLocation.getHeight()));
-
-        doubleClickActivationArea(agentStart, agentEnd);
+        doubleClickActivationArea(agentLocation);
         //Check for low sec
-        Rectangle lowSecCheck = screenActions.findImage(screenLocations.centreScreen(),"lowsecmission.png");
+        Rectangle lowSecCheck = screenActions.findImage(ScreenLocations.centreScreen,"lowsecmission.png");
         if (lowSecCheck!=null) {
             //decline mission
-            clickActivationArea(Locations.declineMissionStart, Locations.declineMissionEnd);
-            clickActivationArea(Locations.declineMissionYesStart, Locations.declineMissionYesEnd);
+            clickActivationArea(Locations.declineMission);
+            clickActivationArea(Locations.declineMissionYes);
         }
         //accept mission
-        clickActivationArea(Locations.missionAcceptButtonStart, Locations.missionAcceptButtonEnd);
+        clickActivationArea(Locations.missionAcceptButton);
 
         //close mission window
-        clickActivationArea(Locations.missionCloseButtonStart, Locations.missionCloseButtonEnd);
+        clickActivationArea(Locations.missionCloseButton);
     }
 
     public void completeMission() {
         //find agent icon
-        Rectangle agentLocation = screenActions.findImage(screenLocations.agentPanel(),"missionAccepted.png");
+        Rectangle agentLocation = screenActions.findImage(ScreenLocations.agentPanel,"missionAccepted.png");
 
         if(agentLocation == null) {
             System.out.println("Error, can't find agent to complete mission");
             return;
         }
 
-        //double click on agent
-        Point agentStart = new Point((int) agentLocation.getX(), (int) agentLocation.getY());
-        Point agentEnd = new Point((int) (agentLocation.getX() + agentLocation.getWidth()), 
-                                            (int) (agentLocation.getY() + agentLocation.getHeight()));
-
-        doubleClickActivationArea(agentStart, agentEnd);
+        doubleClickActivationArea(agentLocation);
 
         //complete mission
-        clickActivationArea(Locations.missionCompleteButtonStart, Locations.missionCompleteButtonEnd);
+        clickActivationArea(Locations.missionCompleteButton);
 
         //close mission window
-        clickActivationArea(Locations.missionCompleteCloseButtonStart, Locations.missionCompleteCloseButtonEnd);
+        clickActivationArea(Locations.missionCompleteCloseButton);
     }
 
     public void setMissionDestination() {
@@ -71,11 +62,7 @@ public class MissionActionsService extends GeneralActionsService {
             return;
         }
 
-        Point destinationStart = new Point((int) setDestination.getX(), (int) setDestination.getY());
-        Point destinationEnd = new Point((int) (setDestination.getX() + setDestination.getWidth()), 
-                                            (int) (setDestination.getY() + setDestination.getHeight()));
-
-        clickActivationArea(destinationStart, destinationEnd);
+        clickActivationArea(setDestination);
     }
 
     public void startMissionConversation(String selectedAgent) {
@@ -86,10 +73,6 @@ public class MissionActionsService extends GeneralActionsService {
             return;
         }
 
-        Point destinationStart = new Point((int) setDestination.getX(), (int) setDestination.getY());
-        Point destinationEnd = new Point((int) (setDestination.getX() + setDestination.getWidth()), 
-                                            (int) (setDestination.getY() + setDestination.getHeight()));
-
-        doubleClickActivationArea(destinationStart, destinationEnd);
+        doubleClickActivationArea(setDestination);
     }
 }

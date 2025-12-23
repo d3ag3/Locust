@@ -1,133 +1,127 @@
 package com.caliban.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+
+import javax.swing.Timer;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.border.TitledBorder;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 
 import com.caliban.activity.IceMiningActivity;
-import com.caliban.activity.SimpleIceMining;
-import com.caliban.activity.SimpleMining;
+import com.caliban.activity.OreMiningActivity;
+import com.caliban.enums.MinerType;
+import com.caliban.gui.TronComponents.*;
 
-public class MiningPanel extends JPanel {
+public class MiningPanel extends TronPanel {
 
-    private JButton onButton, offButton;
-    private JRadioButton iceButton, oreButton;
-    private JTextArea historyArea;
-    private List<String> history = new LinkedList<>();
+    private TronButton miningButton;
+    private TronRadioButton iceRadioButton, oreRadioButton;
+    private TronComboBox<MinerType> minerTypeComboBox;
+    private TronSpinner charCountSpinner;
+    private TronLabel charCountLabel;
+    private TronLabel stateLabel;
+    private boolean isMining = false;
 
-    //private SimpleIceMining simpleIceMining = new SimpleIceMining();
     private IceMiningActivity simpleIceMining = new IceMiningActivity();
-    private SimpleMining simpleOreMining = new SimpleMining();
+    private OreMiningActivity simpleOreMining = new OreMiningActivity();
 
     public MiningPanel() {
+        setLayout(new BorderLayout());
 
-        setLayout(new FlowLayout());
+        // Create state label with Tron styling
+        stateLabel = new TronLabel("[ STATE: " + simpleIceMining.getState() + " ]");
+        stateLabel.setHorizontalAlignment(JLabel.CENTER);
+        stateLabel.setFont(new Font("Consolas", Font.BOLD, 18));
+        
+        // Create a panel for the controls
+        TronPanel buttonPanel = getButtonPanel();
+        
+        // Set up a timer to update the state label every second
+        Timer stateUpdateTimer = new Timer(1000, e -> {
+            stateLabel.setText("[ STATE: " + simpleIceMining.getState() + " ]");
+        });
+        stateUpdateTimer.start();
 
-        // Create a panel for the history
-        JPanel buttonPanel = getButtonPanel();
-        JPanel alertPanel = getAlertPanel();
-
-        onButton.addActionListener(new ActionListener() {
+        miningButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                updateAlerts("Mining On");
-
-                //onButton.setEnabled(false);
-                //offButton.setEnabled(true);
-                Thread imageFinderThread = new Thread(() -> {
-                    activatePanelAction();
-                });
-                imageFinderThread.start();
+                if (!isMining) {
+                    // Start mining with Tron-style feedback
+                    isMining = true;
+                    miningButton.setText("[ TERMINATE ]");
+                    miningButton.setBackground(TronComponents.TRON_GREEN);
+                    miningButton.setBorder(new TronComponents.TronBorder(TronComponents.TRON_GREEN, true));
+                    Thread imageFinderThread = new Thread(() -> {
+                        startMiningActivity();
+                    });
+                    imageFinderThread.start();
+                } else {
+                    // Stop mining with Tron-style feedback
+                    isMining = false;
+                    miningButton.setText("[ INITIALIZE ]");
+                    miningButton.setBackground(TronComponents.TRON_MEDIUM);
+                    miningButton.setBorder(new TronComponents.TronBorder(TronComponents.TRON_CYAN));
+                    simpleIceMining.stop();
+                }
             }
         });
 
-        offButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                //onButton.setEnabled(true);
-                //offButton.setEnabled(false);
-                updateAlerts("Off");
-
-                simpleIceMining.stop();
-                simpleOreMining.stop();
-            }
-        });
-
-        add(buttonPanel, BorderLayout.NORTH);
-        add(alertPanel, BorderLayout.SOUTH);
+        add(stateLabel, BorderLayout.NORTH);
+        add(buttonPanel, BorderLayout.CENTER);
     }
 
-
-    private JPanel getButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout());
-        iceButton = new JRadioButton("Ice");
-        iceButton.setSelected(true);
-        oreButton = new JRadioButton("Ore");
+    private TronPanel getButtonPanel() {
+        TronPanel panel = new TronPanel(new FlowLayout());
+        
+        minerTypeComboBox = new TronComboBox<>(MinerType.values());
+        minerTypeComboBox.setSelectedItem(MinerType.MACKINAW);
+        
+        iceRadioButton = new TronRadioButton("[ ICE ]");
+        iceRadioButton.setSelected(true);
+        oreRadioButton = new TronRadioButton("[ ORE ]");
 
         ButtonGroup radioGroup = new ButtonGroup();
-        radioGroup.add(iceButton);
-        radioGroup.add(oreButton);
+        radioGroup.add(iceRadioButton);
+        radioGroup.add(oreRadioButton);
 
-        onButton = new JButton("Start");
-        offButton = new JButton("Stop");
+        miningButton = new TronButton("[ INITIALIZE ]");
+        
+        // Make the mining button larger and more prominent
+        Dimension defaultSize = miningButton.getPreferredSize();
+        miningButton.setPreferredSize(new Dimension(defaultSize.width * 2, defaultSize.height * 2));
+        miningButton.setFont(new Font("Consolas", Font.BOLD, 18));
 
-        ButtonGroup buttonGroup = new ButtonGroup();
-        buttonGroup.add(onButton);
-        buttonGroup.add(offButton);
+        SpinnerNumberModel spinnerModel = new SpinnerNumberModel(15, 1, 20, 1);
+        charCountSpinner = new TronSpinner(spinnerModel);
+        charCountLabel = new TronLabel("[ UNITS ]");
 
-        panel.add(iceButton);
-        panel.add(oreButton);
-        panel.add(onButton);
-        panel.add(offButton);
+        panel.add(minerTypeComboBox);
+        panel.add(iceRadioButton);
+        panel.add(oreRadioButton);
+        panel.add(miningButton);
+        panel.add(charCountLabel);
+        panel.add(charCountSpinner);
         return panel;
     }
 
-    private JPanel getAlertPanel() {
-        JPanel historyPanel = new JPanel(new BorderLayout());
-        historyArea = new JTextArea(10, 20);
-        historyArea.setEditable(false);
-        historyPanel.add(new JScrollPane(historyArea), BorderLayout.CENTER);
-        historyPanel.setBorder(new TitledBorder("Alerts"));
-        return historyPanel;
-    }
-
-    private void updateAlerts(String action) {
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        String timestamp = sdf.format(new Date());
-        history.add(timestamp + " - " + action);
-
-        // Limit the history to 1000 items
-        if (history.size() > 1000) {
-            history.remove(0); // Remove the oldest item
+    private void startMiningActivity() {
+        MinerType selectedMinerType = (MinerType) minerTypeComboBox.getSelectedItem();
+        if (iceRadioButton.isSelected()) {
+            simpleIceMining.start((int) charCountSpinner.getValue(), selectedMinerType);
+        } else if (oreRadioButton.isSelected()) {
+            simpleOreMining.start((int) charCountSpinner.getValue(), selectedMinerType);
         }
-
-        // Create an array of strings from the history list
-        String[] historyText = history.toArray(new String[history.size()]);
-
-        // Join the array elements into a single string with newline separators
-        String historyString = String.join("\n", historyText);
-
-        historyArea.setText(historyString);
     }
-
-    
-    private void activatePanelAction() {
-        if (oreButton.isSelected()) simpleOreMining.start();
-
-        if (iceButton.isSelected()) simpleIceMining.start(10);
-    }
-
 }
