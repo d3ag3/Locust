@@ -24,6 +24,8 @@ public enum Images {
     ASTEROID_MEDIUM("overviewMediumAsteroid.png"),
     ASTEROID_LARGE("overviewLargeAsteroid.png"),
     MINING_HOLD("miningHold.png"),
+    ICE_ICON("iceIconUnlocked.png"),
+    ICE_ICON_LOCKED("iceLocked.png"),
     EVE_DESKTOP_ICON("eveDesktop.png");
 
     private final String filename;
@@ -34,6 +36,10 @@ public enum Images {
 
     @Override
     public String toString() {
+        return filename;
+    }
+
+    public String getFilename() {
         return filename;
     }
 }

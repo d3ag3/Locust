@@ -1,8 +1,10 @@
 package com.caliban.activity;
 
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.caliban.actions.OverviewManager;
 import com.caliban.config.ScreenLocations;
 import com.caliban.enums.CharacterType;
 import com.caliban.enums.Images;
@@ -12,6 +14,7 @@ import com.caliban.service.MiningActionsService;
 import com.caliban.service.OreService;
 import com.caliban.service.ScreenActions;
 import com.caliban.service.ThreatCheckerService;
+import java.awt.Rectangle;
 
 public class IceMiningActivity extends Activity {
 
@@ -25,10 +28,13 @@ public class IceMiningActivity extends Activity {
     private final ScreenActions screenActions = new ScreenActions();
     private final OreService oreService = new OreService();
     private final ThreatCheckerService threatChecker = new ThreatCheckerService();
+    private final OverviewManager overviewManager = new OverviewManager();
     private final Random random = new Random();
 
     private int roidsLeft = 0;
-    private double manageOreProbability = 0.6; // Starting at 60%
+    private List<Rectangle> unlockedRoids = null;
+    private List<Rectangle> lockedRoids = null;
+    private double manageOreProbability = 0.5; // Starting at 50%
 
     public void start(int numberCharacters, MinerType minerType) {
         sendAlert("Starting Mining");
@@ -47,6 +53,8 @@ public class IceMiningActivity extends Activity {
             boolean manageOreCalled = false;
 
             for (int i = 0; i < numberCharacters && mainLoop.get(); i++) {
+                CharacterType characterType = getCharType();
+                checkAsteroids();
                 checkForDock();
 /*                status = threatChecker.checkForThreats(status, 
                     () -> sendAlert("Hostiles in area, docking up"),
@@ -55,12 +63,10 @@ public class IceMiningActivity extends Activity {
                         playSound("chatAlarm.wav");
                     });*/ 
 
-                CharacterType characterType = getCharType();
 
                 switch (characterType) {
                     case BOOST:
-                        roidsLeft = handleBooster();
-                        
+                        handleBooster();
                         break;
                     case MINER:
                         if ("MINING".equals(getState()) && roidsLeft > 0) {
@@ -68,7 +74,8 @@ public class IceMiningActivity extends Activity {
                                 oreService.manageOre(minerType);
                                 manageOreCalled = true;
                             }
-                            oreService.mineOre();
+                            mineOre();
+                            //oreService.mineOre();
                         }
                         manageDrones();
                         break;
@@ -93,25 +100,38 @@ public class IceMiningActivity extends Activity {
         }
     }
 
-    private int handleBooster() {
-        roidsLeft = screenActions.countTotalRows();
-        sendAlert("Roids left: " + roidsLeft);
-
+    private void handleBooster() {
         if (roidsLeft <= ROID_DOCK_THRESHOLD && "MINING".equals(getState())) {
-            setState("DOCKING");
-            sendAlert("No roids left. Docking up");
             actionInterfacer.activateBoostHighslots();
         }
-        return roidsLeft;
     }
 
     private void manageDrones() {
         if (roidsLeft <= 4) {
             droneService.recallDrone();
         }
-     }
+    }
+
+    private void checkAsteroids() {
+        unlockedRoids = overviewManager.getTargets(Images.ICE_ICON.toString());
+        lockedRoids = overviewManager.getTargets(Images.ICE_ICON_LOCKED.toString());
+        roidsLeft = unlockedRoids.size() + lockedRoids.size();
+        sendAlert("Roids left: " + roidsLeft);
+    }
+
+    private void mineOre() {
+        if (lockedRoids == null || lockedRoids.size() <= 2) {
+            overviewManager.lockTarget(unlockedRoids);
+        }
+        
+        actionInterfacer.activateHighSlots();
+    }
 
     private void checkForDock() {
+        if (roidsLeft <= ROID_DOCK_THRESHOLD && "MINING".equals(getState())) {
+            setState("DOCKING");
+            sendAlert("No roids left. Docking up");
+        }
         if ("DOCKING".equals(getState()) && !screenActions.isInStation()) {
             actionInterfacer.activateHomeBookmark();
         }
@@ -134,8 +154,6 @@ public class IceMiningActivity extends Activity {
     public void stop() {
         mainLoop.set(false);
     }
-
-
 
     private CharacterType getCharType() {
         if (screenActions.findImage(ScreenLocations.modulePanel, Images.BOOSTER.toString()) != null) {
