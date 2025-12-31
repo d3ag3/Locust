@@ -26,6 +26,8 @@ public enum Images {
     MINING_HOLD("miningHold.png"),
     ICE_ICON("iceIconUnlocked.png"),
     ICE_ICON_LOCKED("iceLocked.png"),
+    ICE_MINER_ACTIVE("iceMinerActive.png"),
+    ORE_MINER_ACTIVE("oreMinerActive.png"),
     EVE_DESKTOP_ICON("eveDesktop.png");
 
     private final String filename;

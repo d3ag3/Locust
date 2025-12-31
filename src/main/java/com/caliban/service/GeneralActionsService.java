@@ -26,23 +26,6 @@ public class GeneralActionsService {
         clickActivationArea(character.getActivationBoundry());
     }
 
-    public void targetAll(String target, int maxTargets) {
-        ArrayList<Rectangle> matches = screenActions.findAllImage(Locations.targetList, target);
-        if (matches.size() == 0) { return;}
-        //reduce list down to max size
-        while (matches.size() > maxTargets) {
-            matches.remove(matches.size() - 1);
-        }
-
-        mouseActions.holdControl();
-        mouseActions.simulateWait(500,1000);
-        for (Rectangle match : matches) {
-            clickActivationArea(match);
-            mouseActions.simulateWait(250,500);
-        }
-        mouseActions.releaseControl();
-    }
-
     public void activateHighSlots() {
         mouseActions.simulateWait(500, 1000);
         if (!screenActions.isHighSlot1Active()) activateHighSlot1();

@@ -23,13 +23,9 @@ public class AlertPanel extends TronPanel {
 
     public AlertPanel() {
         setLayout(new BorderLayout());
-        setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(TronComponents.TRON_CYAN, 2),
-            "[ SYSTEM ALERTS ]",
-            0, 0,
-            new Font("Consolas", Font.BOLD, 12),
-            TronComponents.TRON_CYAN
-        ));
+        setBackground(TronComponents.TRON_DARK);
+        setOpaque(true);
+        setBorder(null);
 
         historyArea = new JTextArea(5, 20);
         historyArea.setEditable(false);
@@ -43,6 +39,8 @@ public class AlertPanel extends TronPanel {
         scrollPane.setBackground(TronComponents.TRON_DARK);
         scrollPane.setBorder(BorderFactory.createLineBorder(TronComponents.TRON_CYAN, 1));
         scrollPane.getViewport().setBackground(TronComponents.TRON_DARK);
+        scrollPane.setOpaque(true);
+        scrollPane.getViewport().setOpaque(true);
         
         // Apply Tron scrollbar styling
         JScrollBar verticalBar = scrollPane.getVerticalScrollBar();

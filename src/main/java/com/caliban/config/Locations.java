@@ -16,7 +16,7 @@ public class Locations {
     public static final Point hislot1GreenActivePixel = new Point(1092, 914);
     public static final Point hislot2GreenActivePixel = new Point(1144, 914);
 
-    public static final Point cargoFullnessBar = new Point(320,589);
+    public static final Point cargoFullnessBar = new Point(169,589);
 
     public static final Point declineMissionStart = new Point(852,822);
     public static final Point declineMissionEnd = new Point(908,838);
@@ -37,15 +37,12 @@ public class Locations {
 
     public static final Rectangle lockedTarget3 = new Rectangle(1205, 322, 35, 43);
 
-    public static final Rectangle cargoHoldActivate = new Rectangle(468, 612, 3, 106);
+    public static final Rectangle cargoHoldActivate = new Rectangle(222, 603, 10, 120);
 
     public static final Rectangle cargoHoldItem1 = new Rectangle(60, 611, 41, 37);
     
     //Mining tab on Overview
     public static final Rectangle miningTab = new Rectangle(1691, 163, 22, 8);
-
-    //Area covered by targettable items
-    public static final Rectangle targetList = new Rectangle(1580, 214, 136, 508);
 
     //Route in manage autopilot
     public static final Rectangle firstRouteSystem = new Rectangle(80, 128, 71, 15);
@@ -60,6 +57,8 @@ public class Locations {
 
     public static final Rectangle missionCompleteCloseButton = new Rectangle(918, 823, 109, 14);
 
+    public static final Rectangle firstItemOreHanger = new Rectangle(52, 603, 32, 35);
+    public static final Rectangle firstItemFleetHanger = new Rectangle(270, 603, 32, 35);
     public static final Rectangle firstItemHanger = new Rectangle(510, 841, 32, 35);
 
     public static final Rectangle stationUndock = new Rectangle(1691, 306, 145, 17);
@@ -68,8 +67,9 @@ public class Locations {
 
     public static final Rectangle declineMissionYes = new Rectangle(806, 627, 123, 16);
 
-    public static final Rectangle bookmarkHome = new Rectangle(1585, 880, 94, 5);
-    public static final Rectangle agentBookmarkHome = new Rectangle(1593, 847, 94, 5);
+    public static final Rectangle bookmarkHome = new Rectangle(1719, 786, 94, 10);
+    public static final Rectangle agentBookmarkHome = new Rectangle(1593, 847, 94, 10);
 
+    public static final Rectangle targetedItems = new Rectangle(693, 19, 677, 175);
     
 }

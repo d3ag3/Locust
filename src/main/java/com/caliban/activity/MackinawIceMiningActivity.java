@@ -4,19 +4,17 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.caliban.actions.CargoManager;
+import com.caliban.actions.DroneManager;
 import com.caliban.actions.OverviewManager;
-import com.caliban.config.ScreenLocations;
 import com.caliban.enums.CharacterType;
 import com.caliban.enums.Images;
-import com.caliban.enums.MinerType;
-import com.caliban.service.DroneService;
 import com.caliban.service.MiningActionsService;
-import com.caliban.service.OreService;
 import com.caliban.service.ScreenActions;
 import com.caliban.service.ThreatCheckerService;
 import java.awt.Rectangle;
 
-public class IceMiningActivity extends Activity {
+public class MackinawIceMiningActivity extends Activity {
 
     private static final int ROID_DOCK_THRESHOLD = 0;
     private static final int IDLE_TIME_MS = 15000;
@@ -24,9 +22,9 @@ public class IceMiningActivity extends Activity {
     private final AtomicBoolean mainLoop = new AtomicBoolean(false);
 
     private final MiningActionsService actionInterfacer = new MiningActionsService();
-    private final DroneService droneService = new DroneService();
+    private final DroneManager droneManager = new DroneManager();
+    private final CargoManager cargoManager = new CargoManager();
     private final ScreenActions screenActions = new ScreenActions();
-    private final OreService oreService = new OreService();
     private final ThreatCheckerService threatChecker = new ThreatCheckerService();
     private final OverviewManager overviewManager = new OverviewManager();
     private final Random random = new Random();
@@ -35,19 +33,15 @@ public class IceMiningActivity extends Activity {
     private List<Rectangle> unlockedRoids = null;
     private List<Rectangle> lockedRoids = null;
     private double manageOreProbability = 0.5; // Starting at 50%
+    private boolean boostActivated = false;
 
-    public void start(int numberCharacters, MinerType minerType) {
+    public void start(int numberCharacters) {
         sendAlert("Starting Mining");
         mainLoop.set(true);
         setState("MINING");
-        
-        // Set manageOreProbability to 1.0 for HULK miners
-        if (minerType == MinerType.HULK) {
-            manageOreProbability = 1.0;
-        }
 
         while (mainLoop.get()) {
-            screenActions.firstDesktop();
+            //screenActions.firstDesktop();
             
             boolean shouldManageOre = shouldManageOreThisLoop();
             boolean manageOreCalled = false;
@@ -55,7 +49,9 @@ public class IceMiningActivity extends Activity {
             for (int i = 0; i < numberCharacters && mainLoop.get(); i++) {
                 CharacterType characterType = getCharType();
                 checkAsteroids();
+                manageDrones();
                 checkForDock();
+
 /*                status = threatChecker.checkForThreats(status, 
                     () -> sendAlert("Hostiles in area, docking up"),
                     () -> {
@@ -70,14 +66,13 @@ public class IceMiningActivity extends Activity {
                         break;
                     case MINER:
                         if ("MINING".equals(getState()) && roidsLeft > 0) {
-                            if (shouldManageOre || screenActions.isCompressionNeeded()) {
-                                oreService.manageOre(minerType);
+                            if (shouldManageOre || cargoManager.isCompressionNeeded()) {
+                                manageOre();
                                 manageOreCalled = true;
                             }
                             mineOre();
-                            //oreService.mineOre();
                         }
-                        manageDrones();
+                        
                         break;
                     default:
                         // DOCKED or UNKNOWN, do nothing
@@ -86,29 +81,26 @@ public class IceMiningActivity extends Activity {
                 screenActions.nextDesktop();
             }
 
-            screenActions.firstDesktop();
+            //screenActions.firstDesktop();
             updateManageOreProbability(manageOreCalled);
             
-            if (mainLoop.get()) {
-                if (minerType == MinerType.HULK) {
-                    actionInterfacer.simulateIdleBehaviour(5000);
-                } else if (minerType == MinerType.MACKINAW) {
-                    actionInterfacer.simulateIdleBehaviour(IDLE_TIME_MS);
-                    actionInterfacer.simulateIdleBehaviour(IDLE_TIME_MS);
-                }
+            if (mainLoop.get() && "MINING".equals(getState())) {
+                actionInterfacer.simulateIdleBehaviour(IDLE_TIME_MS);
+                actionInterfacer.simulateIdleBehaviour(IDLE_TIME_MS);
             }
         }
     }
 
     private void handleBooster() {
-        if (roidsLeft <= ROID_DOCK_THRESHOLD && "MINING".equals(getState())) {
+        if (roidsLeft <= ROID_DOCK_THRESHOLD && "DOCKING".equals(getState()) && !boostActivated) {
             actionInterfacer.activateBoostHighslots();
+            boostActivated = true;
         }
     }
 
     private void manageDrones() {
         if (roidsLeft <= 4) {
-            droneService.recallDrone();
+            droneManager.recallDrone();
         }
     }
 
@@ -125,6 +117,10 @@ public class IceMiningActivity extends Activity {
         }
         
         actionInterfacer.activateHighSlots();
+    }
+
+    public void manageOre() {
+        cargoManager.compressOre();
     }
 
     private void checkForDock() {
@@ -153,19 +149,5 @@ public class IceMiningActivity extends Activity {
 
     public void stop() {
         mainLoop.set(false);
-    }
-
-    private CharacterType getCharType() {
-        if (screenActions.findImage(ScreenLocations.modulePanel, Images.BOOSTER.toString()) != null) {
-            return CharacterType.BOOST;
-        }
-        if (screenActions.findImage(ScreenLocations.modulePanel, Images.ICE_MINER.toString()) != null) {
-            return CharacterType.MINER;
-        }
-        if (screenActions.isInStation()) {
-            return CharacterType.DOCKED;
-        }
-        sendAlert("Unable to get charType");
-        return CharacterType.UNKNOWN;
     }
 }

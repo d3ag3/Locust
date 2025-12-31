@@ -44,26 +44,6 @@ public class ScreenActions {
         }
     }
 
-    public int countTotalRows() {
-        return countAvailableImage(Locations.targetList, Images.ASTEROID_OVERVIEW.toString());
-    }
-
-    public int countTotalRows(String target) {
-        return countAvailableImage(Locations.targetList, target);
-    }
-
-    public int countRowsInRange() {
-        return countTargetableRowsUnder10KM() + countTargetableRowsBetween10KMand20KM();
-    }
-
-    public int countTargetableRowsUnder10KM() {
-        return countAvailableImage(Locations.targetList, Images.OVERVIEW_METERS.toString());
-    }
-
-    public int countTargetableRowsBetween10KMand20KM() {
-        return countAvailableImage(Locations.targetList, Images.TEN_KM.toString());
-    }
-
     public boolean isHighSlot1Active() {
         return isSlotActive(Locations.hislot1GreenActivePixel);
     }
@@ -262,11 +242,9 @@ public class ScreenActions {
 
     public void nextDesktop() {
         robot.keyPress(KeyEvent.VK_CONTROL);
-        robot.keyPress(KeyEvent.VK_WINDOWS);
-        robot.keyPress(KeyEvent.VK_RIGHT);
+        robot.keyPress(KeyEvent.VK_F12);
 
-        robot.keyRelease(KeyEvent.VK_RIGHT);
-        robot.keyRelease(KeyEvent.VK_WINDOWS);
+        robot.keyRelease(KeyEvent.VK_F12);
         robot.keyRelease(KeyEvent.VK_CONTROL);
         robot.delay(500);
     }

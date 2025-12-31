@@ -3,10 +3,12 @@ package com.caliban.actions;
 import java.awt.Rectangle;
 import java.util.List;
 
+import com.caliban.config.ScreenLocations;
+
 public class OverviewManager extends Action {
 
     public List<Rectangle> getTargets(String targetImage) {
-        return screenActions.findAllImage(screenLocations.rightQuarter(), targetImage);
+        return screenActions.findAllImage(ScreenLocations.overview2Icons, targetImage);
     }
 
     public void lockTarget(List<Rectangle> targets) {

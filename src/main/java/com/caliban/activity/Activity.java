@@ -1,7 +1,12 @@
 package com.caliban.activity;
 
+import com.caliban.config.ScreenLocations;
+import com.caliban.enums.CharacterType;
+import com.caliban.enums.Images;
 import com.caliban.event.AlertEvent;
 import com.caliban.event.EventBus;
+import com.caliban.service.ScreenActions;
+
 import javax.sound.sampled.*;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +16,7 @@ import java.util.Collections;
 
 public abstract class Activity {
 
+    protected final ScreenActions screenActions = new ScreenActions();
     // Thread-safe set to track currently playing sounds
     private static final Set<String> currentlyPlayingSounds = Collections.synchronizedSet(new HashSet<>());
 
@@ -86,5 +92,19 @@ public abstract class Activity {
             currentlyPlayingSounds.remove(soundFileName); // Remove from tracking on error
             System.err.println("Audio line unavailable for: " + soundFileName);
         }
+    }
+
+    protected CharacterType getCharType() {
+        if (screenActions.findImage(ScreenLocations.modulePanel, Images.BOOSTER.toString()) != null) {
+            return CharacterType.BOOST;
+        }
+        if (screenActions.findImage(ScreenLocations.modulePanel, Images.ICE_MINER.toString()) != null) {
+            return CharacterType.MINER;
+        }
+        if (screenActions.isInStation()) {
+            return CharacterType.DOCKED;
+        }
+        sendAlert("Unable to get charType");
+        return CharacterType.UNKNOWN;
     }
 }

@@ -133,4 +133,15 @@ public class MouseActions {
         robot.keyRelease(KeyEvent.VK_F2);
         robot.delay(randomizer.generateRandom(100, 500));
     }
+
+    public void dragAndDrop(Rectangle cargoholditem1, Rectangle firstitemfleethanger) {
+        moveMouse(cargoholditem1);
+        robot.delay(randomizer.generateRandom(100, 300));
+        hold();
+        robot.delay(randomizer.generateRandom(300, 600));
+        moveMouse(firstitemfleethanger);
+        robot.delay(randomizer.generateRandom(100, 300));
+        release();
+        robot.delay(randomizer.generateRandom(300, 600));
+    }
 }
