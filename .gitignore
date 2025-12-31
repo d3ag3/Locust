@@ -58,6 +58,7 @@ Thumbs.db
 
 # Application specific
 src/main/resources/screenshots/
+src/main/resources/images/character/
 screenshots/
 sounds/
 *.png
