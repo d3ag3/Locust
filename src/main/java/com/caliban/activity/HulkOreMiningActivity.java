@@ -16,12 +16,9 @@ import com.caliban.enums.MinerType;
 import com.caliban.enums.Status;
 import com.caliban.service.MiningActionsService;
 import com.caliban.service.ScreenActions;
-import com.caliban.service.ThreatCheckerService;
 
+public class HulkOreMiningActivity extends Activity {
 
-public class OreMiningActivity extends Activity {
-
-    private static final int ROID_DOCK_THRESHOLD = 2;
     private static final int IDLE_TIME_MS = 15000;
 
     private final AtomicBoolean mainLoop = new AtomicBoolean(false);
@@ -32,9 +29,7 @@ public class OreMiningActivity extends Activity {
     private final MiningActionsService actionInterfacer = new MiningActionsService();
     private final DroneManager droneManager = new DroneManager();
     private final ScreenActions screenActions = new ScreenActions();
-    private final ThreatCheckerService threatChecker = new ThreatCheckerService();
     private final Random random = new Random();
-
 
     private int roidsLeft = 0;
     private List<Rectangle> unlockedRoids = null;
@@ -54,14 +49,6 @@ public class OreMiningActivity extends Activity {
             boolean manageOreCalled = false;
 
             for (int i = 0; i < numberCharacters && mainLoop.get(); i++) {
-                //checkForDock();
-/*                status = threatChecker.checkForThreats(status, 
-                    () -> sendAlert("Hostiles in area, docking up"),
-                    () -> {
-                        sendAlert("Character mentioned in local");
-                        playSound("chatAlarm.wav");
-                    });*/ 
-
                 CharacterType characterType = getCharType();
 
                 switch (characterType) {
@@ -102,11 +89,6 @@ public class OreMiningActivity extends Activity {
         roidsLeft = countAsteroids();
         sendAlert("Roids left: " + roidsLeft);
 
-        if (roidsLeft <= ROID_DOCK_THRESHOLD && status == Status.MINING) {
-            status = Status.DOCKING;
-            sendAlert("No roids left. Docking up");
-            actionInterfacer.activateBoostHighslots();
-        }
         return roidsLeft;
     }
 
@@ -132,19 +114,14 @@ public class OreMiningActivity extends Activity {
         int activeMiners = screenActions.countAvailableImage(Locations.targetedItems, Images.ORE_MINER_ACTIVE.toString());
 
         if (activeMiners < 2) {
-            actionInterfacer.activateHighSlotsMultipleTargets();
+            actionInterfacer.activateHighSlots();
+            actionInterfacer.activateHighSlots();
         }
     }
 
     public void manageOre() {
         cargoManager.compressOre();
         cargoManager.moveCargoToFleetHanger();
-    }
-
-    private void checkForDock() {
-        if (status == Status.DOCKING && !screenActions.isInStation()) {
-            actionInterfacer.activateHomeBookmark();
-        }
     }
 
     private boolean shouldManageOreThisLoop() {

@@ -13,6 +13,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.Timer;
 
 import com.caliban.activity.HulkIceMiningActivity;
+import com.caliban.activity.HulkOreMiningActivity;
 import com.caliban.activity.MackinawIceMiningActivity;
 import com.caliban.activity.OreMiningActivity;
 import com.caliban.enums.MinerType;
@@ -36,6 +37,7 @@ public class MiningPanel extends TronPanel {
     private MackinawIceMiningActivity mackinawIceMining = new MackinawIceMiningActivity();
     private HulkIceMiningActivity hulkIceMining = new HulkIceMiningActivity();
     private OreMiningActivity simpleOreMining = new OreMiningActivity();
+    private HulkOreMiningActivity hulkOreMining = new HulkOreMiningActivity();
 
     public MiningPanel() {
         setLayout(new BorderLayout());
@@ -127,7 +129,11 @@ public class MiningPanel extends TronPanel {
                 mackinawIceMining.start((int) charCountSpinner.getValue());
             }
         } else if (oreRadioButton.isSelected()) {
-            simpleOreMining.start((int) charCountSpinner.getValue(), selectedMinerType);
+            if (selectedMinerType == MinerType.HULK) {
+                hulkOreMining.start((int) charCountSpinner.getValue(), selectedMinerType);
+            } else if (selectedMinerType == MinerType.MACKINAW) {
+                simpleOreMining.start((int) charCountSpinner.getValue(), selectedMinerType);
+            }
         }
     }
 }

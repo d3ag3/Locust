@@ -52,11 +52,8 @@ public class HulkIceMiningActivity extends Activity {
                     case MINER:
                         if ("MINING".equals(getState()) && roidsLeft > 0) {
                             cargoManager.compressOre();
-                            if (Math.random() < 0.5) {
-                                manageOre();
-                            } else {
-                                mineOre();
-                            }
+                            manageOre();
+                            mineOre();
                         }
                         break;
                     default:
