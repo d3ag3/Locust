@@ -12,9 +12,7 @@ import javax.swing.JLabel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.Timer;
 
-import com.caliban.activity.HulkIceMiningActivity;
-import com.caliban.activity.HulkOreMiningActivity;
-import com.caliban.activity.MackinawIceMiningActivity;
+import com.caliban.activity.IceMiningActivity;
 import com.caliban.activity.OreMiningActivity;
 import com.caliban.enums.MinerType;
 import com.caliban.gui.TronComponents.TronButton;
@@ -34,16 +32,14 @@ public class MiningPanel extends TronPanel {
     private TronLabel stateLabel;
     private boolean isMining = false;
 
-    private MackinawIceMiningActivity mackinawIceMining = new MackinawIceMiningActivity();
-    private HulkIceMiningActivity hulkIceMining = new HulkIceMiningActivity();
+    private IceMiningActivity simpleIceMining = new IceMiningActivity();
     private OreMiningActivity simpleOreMining = new OreMiningActivity();
-    private HulkOreMiningActivity hulkOreMining = new HulkOreMiningActivity();
 
     public MiningPanel() {
         setLayout(new BorderLayout());
 
         // Create state label with Tron styling
-        stateLabel = new TronLabel("[ STATE: " + mackinawIceMining.getState() + " ]");
+        stateLabel = new TronLabel("[ STATE: " + simpleIceMining.getState() + " ]");
         stateLabel.setHorizontalAlignment(JLabel.CENTER);
         stateLabel.setFont(new Font("Consolas", Font.BOLD, 18));
         
@@ -52,7 +48,7 @@ public class MiningPanel extends TronPanel {
         
         // Set up a timer to update the state label every second
         Timer stateUpdateTimer = new Timer(1000, e -> {
-            stateLabel.setText("[ STATE: " + mackinawIceMining.getState() + " ]");
+            stateLabel.setText("[ STATE: " + simpleIceMining.getState() + " ]");
         });
         stateUpdateTimer.start();
 
@@ -75,8 +71,7 @@ public class MiningPanel extends TronPanel {
                     miningButton.setText("[ INITIALIZE ]");
                     miningButton.setBackground(TronComponents.TRON_MEDIUM);
                     miningButton.setBorder(new TronComponents.TronBorder(TronComponents.TRON_CYAN));
-                    mackinawIceMining.stop();
-                    hulkIceMining.stop();
+                    simpleIceMining.stop();
                     simpleOreMining.stop();
                 }
             }
@@ -123,17 +118,9 @@ public class MiningPanel extends TronPanel {
     private void startMiningActivity() {
         MinerType selectedMinerType = (MinerType) minerTypeComboBox.getSelectedItem();
         if (iceRadioButton.isSelected()) {
-            if (selectedMinerType == MinerType.HULK) {
-                hulkIceMining.start((int) charCountSpinner.getValue());
-            } else if (selectedMinerType == MinerType.MACKINAW) {
-                mackinawIceMining.start((int) charCountSpinner.getValue());
-            }
+            simpleIceMining.start((int) charCountSpinner.getValue(), selectedMinerType);
         } else if (oreRadioButton.isSelected()) {
-            if (selectedMinerType == MinerType.HULK) {
-                hulkOreMining.start((int) charCountSpinner.getValue(), selectedMinerType);
-            } else if (selectedMinerType == MinerType.MACKINAW) {
-                simpleOreMining.start((int) charCountSpinner.getValue(), selectedMinerType);
-            }
+            simpleOreMining.start((int) charCountSpinner.getValue(), selectedMinerType);
         }
     }
 }

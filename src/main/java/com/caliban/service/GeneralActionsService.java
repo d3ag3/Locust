@@ -13,7 +13,7 @@ public class GeneralActionsService {
 
     protected Randomizer randomizer = new Randomizer();
 
-    protected MouseActions mouseActions = new MouseActions();
+    protected InterfaceActions mouseActions = new InterfaceActions();
 
     protected ScreenActions screenActions = new ScreenActions();
 

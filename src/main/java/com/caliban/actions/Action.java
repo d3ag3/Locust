@@ -5,7 +5,7 @@ import java.awt.Robot;
 
 import com.caliban.helper.Randomizer;
 import com.caliban.service.GeneralActionsService;
-import com.caliban.service.MouseActions;
+import com.caliban.service.InterfaceActions;
 import com.caliban.service.ScreenActions;
 
 /**
@@ -17,7 +17,7 @@ public class Action {
     protected Robot robot;
         protected Randomizer randomizer = new Randomizer();
         protected GeneralActionsService generalActionsService = new GeneralActionsService();
-        protected MouseActions mouseActions = new MouseActions();
+        protected InterfaceActions mouseActions = new InterfaceActions();
         protected ScreenActions screenActions = new ScreenActions();
     
     /**

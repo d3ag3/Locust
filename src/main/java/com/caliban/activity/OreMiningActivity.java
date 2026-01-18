@@ -1,48 +1,28 @@
 package com.caliban.activity;
 
-import java.awt.Rectangle;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.caliban.actions.CargoManager;
-import com.caliban.actions.DroneManager;
-import com.caliban.actions.OverviewManager;
 import com.caliban.config.Locations;
-import com.caliban.config.ScreenLocations;
 import com.caliban.enums.CharacterType;
 import com.caliban.enums.Images;
 import com.caliban.enums.MinerType;
 import com.caliban.enums.Status;
-import com.caliban.service.MiningActionsService;
-import com.caliban.service.ScreenActions;
-import com.caliban.service.ThreatCheckerService;
 
-
-public class OreMiningActivity extends Activity {
+public class MackinawOreMiningActivity extends Mining {
 
     private static final int ROID_DOCK_THRESHOLD = 2;
     private static final int IDLE_TIME_MS = 15000;
 
-    private final AtomicBoolean mainLoop = new AtomicBoolean(false);
-    private Status status = Status.MINING;
+    private List<String> lockedOreAsteroidTypes = List.of(
+        "overviewTargeted.png"
+    );
 
-    private final CargoManager cargoManager = new CargoManager();
-    private final OverviewManager overviewManager = new OverviewManager();
-    private final MiningActionsService actionInterfacer = new MiningActionsService();
-    private final DroneManager droneManager = new DroneManager();
-    private final ScreenActions screenActions = new ScreenActions();
-    private final ThreatCheckerService threatChecker = new ThreatCheckerService();
-    private final Random random = new Random();
-
-
-    private int roidsLeft = 0;
-    private List<Rectangle> unlockedRoids = null;
-    private List<Rectangle> lockedRoids = null;
-
-    private double manageOreProbability = 0.6; // Starting at 60%
+    private List<String> unlockedOreAsteroidTypes = List.of(
+        Images.ASTEROID_SMALL.toString(), Images.ASTEROID_MEDIUM.toString(), Images.ASTEROID_LARGE.toString()
+    );
 
     public void start(int numberCharacters, MinerType minerType) {
+        this.minerType = minerType;
         sendAlert("Starting Mining");
         mainLoop.set(true);
         status = Status.MINING;
@@ -54,14 +34,6 @@ public class OreMiningActivity extends Activity {
             boolean manageOreCalled = false;
 
             for (int i = 0; i < numberCharacters && mainLoop.get(); i++) {
-                //checkForDock();
-/*                status = threatChecker.checkForThreats(status, 
-                    () -> sendAlert("Hostiles in area, docking up"),
-                    () -> {
-                        sendAlert("Character mentioned in local");
-                        playSound("chatAlarm.wav");
-                    });*/ 
-
                 CharacterType characterType = getCharType();
 
                 switch (characterType) {
@@ -89,17 +61,14 @@ public class OreMiningActivity extends Activity {
             updateManageOreProbability(manageOreCalled);
             
             if (mainLoop.get()) {
-                if (minerType == MinerType.HULK) {
-                    actionInterfacer.simulateIdleBehaviour(5000);
-                } else if (minerType == MinerType.MACKINAW) {
-                    actionInterfacer.simulateIdleBehaviour(IDLE_TIME_MS);
-                }
+                performIdleBehavior(minerType);
             }
         }
     }
 
-    private int handleBooster() {
-        roidsLeft = countAsteroids();
+    @Override
+    protected int handleBooster() {
+        roidsLeft = countAsteroids(lockedOreAsteroidTypes, unlockedOreAsteroidTypes);
         sendAlert("Roids left: " + roidsLeft);
 
         if (roidsLeft <= ROID_DOCK_THRESHOLD && status == Status.MINING) {
@@ -110,21 +79,12 @@ public class OreMiningActivity extends Activity {
         return roidsLeft;
     }
 
-    private int countAsteroids() {
-        int small = screenActions.countAvailableImage(ScreenLocations.overview2Icons, Images.ASTEROID_SMALL.toString());
-        int medium = screenActions.countAvailableImage(ScreenLocations.overview2Icons, Images.ASTEROID_MEDIUM.toString());
-        int large = screenActions.countAvailableImage(ScreenLocations.overview2Icons, Images.ASTEROID_LARGE.toString());
+    protected void handledAsteroids() {
 
-        return small + medium + large;
     }
 
-    private void manageDrones() {
-        if (roidsLeft <= 4) {
-            droneManager.recallDrone();
-        }
-     }
-
-    private void mineOre() {
+    @Override
+    protected void mineOre() {
         if (lockedRoids == null || lockedRoids.size() <= 2) {
             overviewManager.lockTarget(unlockedRoids);
         }
@@ -136,32 +96,41 @@ public class OreMiningActivity extends Activity {
         }
     }
 
-    public void manageOre() {
+    @Override
+    protected void manageOre() {
         cargoManager.compressOre();
-        cargoManager.moveCargoToFleetHanger();
+        if(minerType == MinerType.HULK) {
+            cargoManager.moveCargoToFleetHanger();
+        }
     }
 
-    private void checkForDock() {
+    protected void checkForDock() {
         if (status == Status.DOCKING && !screenActions.isInStation()) {
             actionInterfacer.activateHomeBookmark();
         }
     }
 
-    private boolean shouldManageOreThisLoop() {
-        return random.nextDouble() < manageOreProbability;
-    }
-
-    private void updateManageOreProbability(boolean manageOreCalled) {
-        if (manageOreCalled) {
-            // Reset probability to base 60% when manageOre was called
-            manageOreProbability = 0.6;
-        } else {
-            // Increase probability by 10% when manageOre wasn't called (max 100%)
-            manageOreProbability = Math.min(1.0, manageOreProbability + 0.1);
+    @Override
+    protected void performIdleBehavior(MinerType minerType) {
+        if (minerType == MinerType.HULK) {
+            actionInterfacer.simulateIdleBehaviour(5000);
+        } else if (minerType == MinerType.MACKINAW) {
+            actionInterfacer.simulateIdleBehaviour(IDLE_TIME_MS);
         }
     }
 
-    public void stop() {
-        mainLoop.set(false);
+    @Override
+    protected void handleMinerLogic() {
+        // Implementation for Mackinaw specific miner logic if needed
+    }
+
+    @Override
+    protected void sendRoidsLeftAlert() {
+        sendAlert("Roids left: " + roidsLeft);
+    }
+
+    @Override
+    protected void performIdleBehavior() {
+        actionInterfacer.simulateIdleBehaviour(IDLE_TIME_MS);
     }
 }

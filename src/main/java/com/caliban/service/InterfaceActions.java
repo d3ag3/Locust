@@ -10,13 +10,13 @@ import com.caliban.helper.Randomizer;
 import com.github.joonasvali.naturalmouse.api.MouseMotionFactory;
 import com.github.joonasvali.naturalmouse.util.FactoryTemplates;
 
-public class MouseActions {
+public class InterfaceActions {
 
     private MouseMotionFactory factory = FactoryTemplates.createFastGamerMotionFactory();
     private Robot robot;
 	private Randomizer randomizer;
 
-    public MouseActions() {
+    public InterfaceActions() {
         randomizer = new Randomizer();
 
         try {
