@@ -8,7 +8,7 @@ import com.caliban.enums.Images;
 import com.caliban.enums.MinerType;
 import com.caliban.enums.Status;
 
-public class MackinawOreMiningActivity extends Mining {
+public class OreMiningActivity extends Mining {
 
     private static final int ROID_DOCK_THRESHOLD = 2;
     private static final int IDLE_TIME_MS = 15000;

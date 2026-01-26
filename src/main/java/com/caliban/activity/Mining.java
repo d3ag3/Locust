@@ -47,6 +47,7 @@ public abstract class Mining extends Activity {
     }
 
     protected int setLockedAsteroids(List<String> asteroidTypes) {
+        lockedRoids.clear();
         for (String asteroidType : asteroidTypes) {
             lockedRoids.addAll(screenActions.findAllImage(ScreenLocations.overview2Icons, asteroidType));
         }
@@ -54,6 +55,7 @@ public abstract class Mining extends Activity {
     }
 
      protected int setUnLockedAsteroids(List<String> asteroidTypes) {
+        unlockedRoids.clear();
         for (String asteroidType : asteroidTypes) {
             unlockedRoids.addAll(screenActions.findAllImage(ScreenLocations.overview2Icons, asteroidType));
         }

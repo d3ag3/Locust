@@ -12,7 +12,7 @@ public class IceMiningActivity extends Mining {
     private static final int IDLE_TIME_MS = 15000;
 
     private List<String> lockedIceAsteroidTypes = List.of(
-        Images.ICE_ICON.toString()
+        Images.ICE_ICON_LOCKED.toString()
     );
 
     private List<String> unlockedIceAsteroidTypes = List.of(

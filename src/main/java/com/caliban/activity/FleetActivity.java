@@ -1,12 +1,6 @@
 package com.caliban.activity;
 
-import java.awt.Rectangle;
-import java.util.ArrayList;
-
 import com.caliban.service.FleetActionsService;
-import com.caliban.service.InterfaceActions;
-import com.caliban.config.ScreenLocations;
-import com.caliban.helper.ScreenLocationsHelper;
 import com.caliban.service.ScreenActions;
 
 
