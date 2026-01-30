@@ -10,7 +10,6 @@ import com.caliban.actions.CargoManager;
 import com.caliban.actions.DroneManager;
 import com.caliban.actions.OverviewManager;
 import com.caliban.config.ScreenLocations;
-import com.caliban.enums.Images;
 import com.caliban.enums.MinerType;
 import com.caliban.enums.Status;
 import com.caliban.service.MiningActionsService;
