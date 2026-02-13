@@ -58,7 +58,7 @@ public class IceMiningActivity extends Mining {
             updateManageOreProbability(manageOreCalled);
             
             if (mainLoop.get() && "MINING".equals(getState())) {
-                performIdleBehavior();
+                performIdleBehavior(minerType);
             }
         }
     }
@@ -105,13 +105,21 @@ public class IceMiningActivity extends Mining {
     }
 
     @Override
-    protected void performIdleBehavior() {
-        actionInterfacer.simulateIdleBehaviour(IDLE_TIME_MS);
-        actionInterfacer.simulateIdleBehaviour(IDLE_TIME_MS);
-    }
-
-    @Override
     protected void performIdleBehavior(MinerType minerType) {
-        performIdleBehavior();
+        int idleTime = IDLE_TIME_MS;
+
+        if(roidsLeft < 10) {
+            idleTime = IDLE_TIME_MS / 3; // Reduce idle time when few asteroids are left
+        }
+
+        if(roidsLeft < 5) {
+            idleTime = IDLE_TIME_MS / 6; // Further reduce idle time when very few asteroids are left
+        }
+
+        if (minerType == MinerType.HULK) {
+            actionInterfacer.simulateIdleBehaviour(5000);
+        } else if (minerType == MinerType.MACKINAW) {
+            actionInterfacer.simulateIdleBehaviour(idleTime);
+        }
     }
 }

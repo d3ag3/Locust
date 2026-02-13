@@ -101,6 +101,5 @@ public abstract class Mining extends Activity {
     protected abstract void mineOre();
     protected abstract void manageOre();
     protected abstract void sendRoidsLeftAlert();
-    protected abstract void performIdleBehavior();
     protected abstract void performIdleBehavior(MinerType minerType);
 }

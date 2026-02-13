@@ -128,9 +128,4 @@ public class OreMiningActivity extends Mining {
     protected void sendRoidsLeftAlert() {
         sendAlert("Roids left: " + roidsLeft);
     }
-
-    @Override
-    protected void performIdleBehavior() {
-        actionInterfacer.simulateIdleBehaviour(IDLE_TIME_MS);
-    }
 }

@@ -47,6 +47,7 @@ public class MainInterface extends TronFrame {
         JPanel missionsPanel = new MissionsPanel();
         JPanel imagePanel = new ImagePanel();
         JPanel locationsPanel = new LocationsPanel();
+        JPanel autoLooterPanel = new JPanel();
 
         // Add tabs to the tabbed pane with Tron-style icons
         tabbedPane.addTab("[ GENERAL ]", generalPanel);
@@ -55,6 +56,7 @@ public class MainInterface extends TronFrame {
         tabbedPane.addTab("[ MISSIONS ]", missionsPanel);
         tabbedPane.addTab("[ IMAGES ]", imagePanel);
         tabbedPane.addTab("[ LOCATIONS ]", locationsPanel);
+        tabbedPane.addTab("[ AUTOLOOTER ]", autoLooterPanel);
 
         // Create horizontal split pane for Activity Log and Alert panels
         JSplitPane bottomSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, activityLogPanel, alertPanel);
